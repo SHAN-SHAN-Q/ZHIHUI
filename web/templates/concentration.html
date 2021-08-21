@@ -1,0 +1,300 @@
+{% extends 'layout/basic.html' %}
+{% load static %}
+
+{% block title %} 专注度 {% endblock %}
+{{ datas }}
+{{ focus }}
+
+{% block css %}
+
+    <link rel="stylesheet" href="/static/plugin/bootstrap/css/bootstrap.min.css">
+
+    <style>
+        .navbar{
+            margin: 0;
+            padding: 0;
+        }
+        .cootent{
+                height: 912px;
+                width: 1520px;
+				background-color: #b3b1b1;
+			}
+        .left{
+            display: inline-block;
+            float: left;
+            width: 1080px;
+            height: 655px;
+
+            margin: 5px;
+        }
+        #im{
+            width: 1048px;
+            height: 580px;
+        }
+        .right{
+            display: inline-block;
+            float: right;
+            width: 425px;
+            height: 902px;
+            margin: 5px 5px 5px 0;
+        }
+        .bottom{
+            display: inline-block;
+            float: left;
+            width: 1080px;
+            height: 242px;
+            background-color: #d5d5d5;
+            margin: 0 5px 5px 5px;
+        }
+        td:empty {
+            background-color:#dddddd;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div  class="cootent">
+
+
+        <div class="left panel panel-default">
+            <div class="panel-heading">
+                <i class="fa fa-caret-square-o-right" aria-hidden="true"></i>
+                实时展现
+            </div>
+            <div class="panel-body">
+                <div id="container">
+{#                    <img id="im" src="/static/img/concentration/1.jpg"/>#}
+                    <img id="im" src="http://127.0.0.1:8000/getVideo" >
+{#                    <script type="text/javascript">#}
+{#                        setInterval("changeImg()",10);#}
+{#                        i=1#}
+{#                        function changeImg(){#}
+{#                            var SImg = document.getElementById('im');#}
+{#                            SImg.src="/static/img/concentration/" + i%10 + ".jpg";#}
+{#                            i;#}
+{#                        }#}
+{#		            </script>#}
+                </div>
+            </div>
+        </div>
+
+        <div class="right panel panel-default">
+            <div class="panel-heading">
+                <i class="fa fa-bar-chart" aria-hidden="true"></i>
+                数据统计
+            </div>
+            <div class="panel-body">
+                <div id="container" style="width: 100%;min-height: 800px">
+                    <div id="chart" style="width: auto;height:274px;"></div>
+                    <div id="barchart" style="width: auto;height: 274px;"></div>
+                    <div id="priority" style="width: auto;height: 274px;"></div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="bottom panel panel-default">
+            <div class="panel-heading">
+                <i class="fa fa-calendar-o" aria-hidden="true"></i>
+                识别信息
+            </div>
+            <div class="panel-body" style="padding: 0;">
+                <div id="container" >
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>学生状态</th>
+                                <th>识别人数</th>
+                                <th>具体信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for data in datas %}
+                            <tr>
+                                <td>{{ data.id }}</td>
+                                <td>{{ data.state }}</td>
+                                <td>{{ data.Number }}</td>
+                                <td>{{ data.specific }}</td>
+                            </tr>
+                        {% endfor %}
+
+                    </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
+
+
+{% block js %}
+    {#饼状图需要的文件#}
+
+
+    <script src="/static/plugin/daterangepicker/moment.min.js"></script>
+    <script src="/static/plugin/daterangepicker/daterangepicker.js"></script>
+    <script src="/static/plugin/highcharts/highcharts.js"></script>
+
+    <script src="https://code.highcharts.com.cn/highcharts/highcharts.js"></script>
+    <script src="https://code.highcharts.com.cn/highcharts/modules/exporting.js"></script>
+    <script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
+
+    <script src="https://code.highcharts.com.cn/highcharts/themes/dark-unica.js"></script>
+    <script>
+        //统计图表
+        var INIT_CHART = "{% url 'issues_chart'  %}";
+        var PRIORITY= "{% url 'issues_priority' %}";
+        var BARCHART= "{% url 'issues_barchart' %}";
+        $(function () {
+            initChart();
+            priority();
+            barchart();
+        });
+        //折现图
+        //---------------------------------------------------------------------------
+        function initChart(){
+            //chart
+            var config = {
+                title: {
+                        text: '高二（3）班学生专注度值统计总汇'
+                },
+                credits:{
+                    enabled: false //关闭版权信息
+                },
+                yAxis: {
+                        title: {
+                                text: '专注值'
+                        },
+                        endOnTick: false,
+                        maxPadding: 0.2
+                },
+                xAxis:{
+                    categories:['第一节','第二节','第三节','第四节','第五节','第六节','第七节','第八节']
+                },
+                legend: {
+                        enabled:false
+                        {#layout: 'vertical',#}
+                        {#align: 'right',#}
+                        {#verticalAlign: 'middle'#}
+                },
+                series: [{
+				name: '专注度平局值',
+				data: [
+
+                ]
+		        },],
+            };
+            {#var chart = Highcharts.chart('chart',config)#}
+            $.ajax({
+                url: INIT_CHART,
+                type: "GET",
+                dataType: "JSON",
+                success: function (res) {
+                    config.series[0].data = res.data;
+                    Highcharts.chart('chart', config);
+                }
+            });
+        }
+        //条形图
+        //---------------------------------------------------------------------------
+        function barchart() {
+            var config = {chart: {
+        type: 'column'
+    },
+    title: {
+        text: '班级课堂人数统计'
+    },
+    subtitle: {
+        text: null
+    },
+    xAxis: {
+        type: 'category',
+
+        labels: {
+            rotation: -45  // 设置轴标签旋转角度
+        }
+    },
+    yAxis: {
+        min: 0,
+        title: {
+            text: '人'
+        }
+    },
+    legend: {
+        enabled: false
+    },
+    tooltip: {
+        pointFormat: '人数: <b>{point.y:.1f} 人</b>'
+    },
+    series: [{
+        name: '总人口',
+        data: [],
+        dataLabels: {
+            enabled: true,
+            rotation: -90,
+            color: '#FFFFFF',
+            align: 'right',
+            format: '{point.y:0f}', // :.1f 为保留 1 位小数
+            y: 10
+        }
+    }]};
+            $.ajax({
+                url: BARCHART,
+                type: "GET",
+                dataType: "JSON",
+                success: function (res) {
+                    config.series[0].data = res.data;
+                    Highcharts.chart('barchart', config);
+                }
+            });
+        }
+        //饼状图
+        //---------------------------------------------------------------------------
+
+function priority(){
+        var config = {
+                chart: {
+                    type: 'pie'
+                },
+                title: {
+                    text: "班级睡觉人数占比"
+                },
+                credits: {
+                    enabled: false // 关闭版权信息
+                },
+                tooltip: {
+                    pointFormat: '{series.name}: <b>{point.y} %</b>'
+                },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        dataLabels: {
+                            enabled: false
+                        },
+                        showInLegend: true
+                    }
+                },
+                series: [{
+                    name: '比例',
+                    colorByPoint: true,
+                    data: []
+                }]
+            };
+            $.ajax({
+                url:PRIORITY,
+                type:"GET",
+                dataType:"JSON",
+                success:function(res){
+                    config.series[0].data=res.data;
+                    Highcharts.chart('priority',config);
+                }
+            })
+}
+        //---------------------------------------------------------------------------
+    </script>
+{% endblock %}
